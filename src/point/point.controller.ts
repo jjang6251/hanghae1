@@ -19,8 +19,8 @@ export class PointController {
     @Get(':id')
     async point(@Param('id') id): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const result = this.pointService.getPoint(userId);
-        return result;
+        const getPointResult = this.pointService.getPoint(userId);
+        return getPointResult;
     }
 
     /**
@@ -29,7 +29,8 @@ export class PointController {
     @Get(':id/histories')
     async history(@Param('id') id): Promise<PointHistory[]> {
         const userId = Number.parseInt(id)
-        return []
+        const historyResult = this.pointService.history(userId);
+        return historyResult;
     }
 
     /**
@@ -42,8 +43,8 @@ export class PointController {
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
         const amount = pointDto.amount;
-        const dbResult = this.pointService.charge(userId, amount);
-        return dbResult;
+        const chargeResult = this.pointService.charge(userId, amount);
+        return chargeResult;
     }
 
     /**
@@ -55,7 +56,8 @@ export class PointController {
         @Body(ValidationPipe) pointDto: PointDto,
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const amount = pointDto.amount
-        return { id: userId, point: amount, updateMillis: Date.now() }
+        const amount = pointDto.amount;
+        const useResult = this.pointService.use(userId, amount);
+        return useResult;
     }
 }
