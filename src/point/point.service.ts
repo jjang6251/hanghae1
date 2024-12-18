@@ -31,6 +31,8 @@ export class PointService {
         2. 사용자의 id로 historyDb에 있는 값을 조회한다.(내역이 없을 경우 빈 배열 반환.)
     */
     async history(userId: number): Promise<PointHistory[]> {
+        const result = this.userDb.selectById(userId);
+
         try {
             const historyResult = this.historyDb.selectAllByUserId(userId);
             return historyResult;
@@ -81,7 +83,7 @@ export class PointService {
             try {
                 const userPoint = (await this.userDb.selectById(userId)).point;
                 const updatePoint = await (userPoint - point);
-                if(updatePoint < 0) {
+                if (updatePoint < 0) {
                     throw new HttpException('잔액 부족', HttpStatus.UNPROCESSABLE_ENTITY);
                 } else {
                     const dbResult = await this.userDb.insertOrUpdate(userId, updatePoint);
