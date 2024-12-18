@@ -4,6 +4,7 @@ import { UserPointTable } from "src/database/userpoint.table";
 import { PointHistoryTable } from "src/database/pointhistory.table";
 import { PointBody as PointDto } from "./point.dto";
 import { PointService } from "./point.service";
+import { Mutex } from "async-mutex";
 
 
 @Controller('/point')
@@ -12,6 +13,15 @@ export class PointController {
     constructor(
         private readonly pointService: PointService
     ) {}
+
+    private locks = new Map<number, Mutex>();
+
+    private getOrCreateMutex(userId: number): Mutex {
+        if(!this.locks.has(userId)) {
+            this.locks.set(userId, new Mutex());
+        }
+        return this.locks.get(userId)!;
+    }
 
     /**
      * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.

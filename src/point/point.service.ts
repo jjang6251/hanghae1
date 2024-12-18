@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PointHistoryTable } from 'src/database/pointhistory.table';
-import { UserPointTable } from 'src/database/userpoint.table';
+import { PointHistoryTable } from '../database/pointhistory.table';
+import { UserPointTable } from '../database/userpoint.table';
 import { PointHistory, TransactionType, UserPoint } from './point.model';
 
 @Injectable()
