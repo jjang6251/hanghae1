@@ -3,15 +3,25 @@ import { PointHistory, TransactionType, UserPoint } from "./point.model";
 import { UserPointTable } from "src/database/userpoint.table";
 import { PointHistoryTable } from "src/database/pointhistory.table";
 import { PointBody as PointDto } from "./point.dto";
+import { PointService } from "./point.service";
+import { Mutex } from "async-mutex";
 
 
 @Controller('/point')
 export class PointController {
 
     constructor(
-        private readonly userDb: UserPointTable,
-        private readonly historyDb: PointHistoryTable,
-    ) {}
+        private readonly pointService: PointService
+    ) { }
+
+    private locks = new Map<number, Mutex>();
+
+    private getOrCreateMutex(userId: number): Mutex {
+        if (!this.locks.has(userId)) {
+            this.locks.set(userId, new Mutex());
+        }
+        return this.locks.get(userId)!;
+    }
 
     /**
      * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
@@ -19,7 +29,8 @@ export class PointController {
     @Get(':id')
     async point(@Param('id') id): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        return { id: userId, point: 0, updateMillis: Date.now() }
+        const getPointResult = this.pointService.getPoint(userId);
+        return getPointResult;
     }
 
     /**
@@ -28,7 +39,8 @@ export class PointController {
     @Get(':id/histories')
     async history(@Param('id') id): Promise<PointHistory[]> {
         const userId = Number.parseInt(id)
-        return []
+        const historyResult = this.pointService.history(userId);
+        return historyResult;
     }
 
     /**
@@ -40,8 +52,13 @@ export class PointController {
         @Body(ValidationPipe) pointDto: PointDto,
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const amount = pointDto.amount
-        return { id: userId, point: amount, updateMillis: Date.now() }
+        const mutex = this.getOrCreateMutex(userId);
+        const chargeResult = await mutex.runExclusive(async () => {
+            const amount = pointDto.amount;
+            const chargeResult = this.pointService.charge(userId, amount);
+            return chargeResult;
+        })
+        return chargeResult;
     }
 
     /**
@@ -53,7 +70,12 @@ export class PointController {
         @Body(ValidationPipe) pointDto: PointDto,
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const amount = pointDto.amount
-        return { id: userId, point: amount, updateMillis: Date.now() }
+        const mutex = this.getOrCreateMutex(userId);
+        const useResult = await mutex.runExclusive(async () => {
+            const amount = pointDto.amount;
+            const useResult = this.pointService.use(userId, amount);
+            return useResult;
+        });
+        return useResult;
     }
 }
