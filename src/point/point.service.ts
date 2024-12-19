@@ -55,7 +55,8 @@ export class PointService {
             throw new HttpException('잘못된 금액 입력', HttpStatus.BAD_REQUEST)
         } else {
             try {
-                const userPoint = (await this.userDb.selectById(userId)).point;
+                const userDb = await this.userDb.selectById(userId)
+                const userPoint = userDb.point;
                 const updatePoint = await (userPoint + point);
                 const dbResult = await this.userDb.insertOrUpdate(userId, updatePoint);
                 const historyResult = await this.historyDb.insert(userId, point, TransactionType.CHARGE, dbResult.updateMillis);
@@ -65,6 +66,8 @@ export class PointService {
                 throw error;
             }
         }
+
+        
     }
 
     //특정 유저의 포인트를 사용하는 기능

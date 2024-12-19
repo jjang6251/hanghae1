@@ -12,12 +12,12 @@ export class PointController {
 
     constructor(
         private readonly pointService: PointService
-    ) {}
+    ) { }
 
     private locks = new Map<number, Mutex>();
 
     private getOrCreateMutex(userId: number): Mutex {
-        if(!this.locks.has(userId)) {
+        if (!this.locks.has(userId)) {
             this.locks.set(userId, new Mutex());
         }
         return this.locks.get(userId)!;
@@ -52,8 +52,12 @@ export class PointController {
         @Body(ValidationPipe) pointDto: PointDto,
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const amount = pointDto.amount;
-        const chargeResult = this.pointService.charge(userId, amount);
+        const mutex = this.getOrCreateMutex(userId);
+        const chargeResult = await mutex.runExclusive(async () => {
+            const amount = pointDto.amount;
+            const chargeResult = this.pointService.charge(userId, amount);
+            return chargeResult;
+        })
         return chargeResult;
     }
 
@@ -66,8 +70,12 @@ export class PointController {
         @Body(ValidationPipe) pointDto: PointDto,
     ): Promise<UserPoint> {
         const userId = Number.parseInt(id)
-        const amount = pointDto.amount;
-        const useResult = this.pointService.use(userId, amount);
+        const mutex = this.getOrCreateMutex(userId);
+        const useResult = await mutex.runExclusive(async () => {
+            const amount = pointDto.amount;
+            const useResult = this.pointService.use(userId, amount);
+            return useResult;
+        });
         return useResult;
     }
 }
